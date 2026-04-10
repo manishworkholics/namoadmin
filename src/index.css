@@ -17,3 +17,77 @@ body {
 .dark body {
   @apply bg-gray-950 text-gray-200;
 }
+
+/* CKEditor 5 Styling */
+.ck.ck-editor__main > .ck-editor__editable {
+  @apply min-h-[200px] bg-white dark:bg-slate-700 text-gray-900 dark:text-white rounded-b-lg;
+  font-family: inherit;
+}
+
+.ck-editor__editable_inline {
+  @apply focus:outline-none;
+}
+
+.ck.ck-toolbar {
+  @apply bg-gray-50 dark:bg-slate-800 border-b border-gray-200 dark:border-slate-600 rounded-t-lg;
+}
+
+.ck.ck-toolbar__separator {
+  @apply bg-gray-300 dark:bg-slate-600;
+}
+
+.ck-toolbar__items {
+  @apply flex-wrap;
+}
+
+.ck.ck-button:not(.ck-off) {
+  @apply text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700;
+}
+
+.ck.ck-button.ck-disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+.ck.ck-button.ck-on {
+  @apply bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400;
+}
+
+/* CKEditor list styling */
+.ck-content ul,
+.ck-content ol {
+  @apply pl-5 my-2;
+}
+
+.ck-content li {
+  @apply my-1;
+}
+
+.ck-content blockquote {
+  @apply border-l-4 border-blue-500 pl-4 italic text-gray-600 dark:text-gray-400 my-2;
+}
+
+.ck-content table {
+  @apply border-collapse border border-gray-300 dark:border-slate-600 w-full my-2;
+}
+
+.ck-content table th,
+.ck-content table td {
+  @apply border border-gray-300 dark:border-slate-600 px-3 py-2;
+}
+
+.ck-content table th {
+  @apply bg-gray-100 dark:bg-slate-700;
+}
+
+/* CKEditor dropdown styling */
+.ck.ck-dropdown__panel {
+  @apply bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded shadow-lg;
+}
+
+.ck.ck-list__item {
+  @apply text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700;
+}
+
+.ck.ck-list__item.ck-on {
+  @apply bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400;
+}
