@@ -1,16 +1,89 @@
-import { useState } from "react";
-import { Trash2, Plus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Trash2, Plus, Pencil } from "lucide-react";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
 
+import { useDispatch, useSelector } from "react-redux";
+import {
+  createChecklist,
+  getChecklists,
+  deleteChecklist,
+} from "../../store/slices/checklistSlice";
+import { getStores } from "../../store/slices/storeSlice";
+
 const Checklist = () => {
+  const dispatch = useDispatch();
+  const { loading, success, list } = useSelector((s) => s.checklist);
+
+  const [editId, setEditId] = useState(null);
+
   const [form, setForm] = useState({
     title: "",
     role: "",
     branch: "",
     tasks: [""],
   });
+
+  const { list: storeList } = useSelector((s) => s.store);
+
+  useEffect(() => {
+    dispatch(getStores());
+  }, [dispatch]);
+
+
+
+  // 🔥 LOAD LIST
+  useEffect(() => {
+    dispatch(getChecklists());
+  }, [dispatch, success]);
+
+  // 🔥 SUBMIT
+  const handleSubmit = () => {
+    if (!form.title || !form.role || !form.branch) {
+      alert("Please fill all fields");
+      return;
+    }
+
+    const filteredTasks = form.tasks.filter((t) => t.trim() !== "");
+
+    if (filteredTasks.length === 0) {
+      alert("Add at least one task");
+      return;
+    }
+
+    dispatch(
+      createChecklist({
+        ...form,
+        tasks: filteredTasks,
+        branch: form.branch, // ✅ already storeId
+      })
+    );
+
+    setEditId(null);
+  };
+
+  // 🔥 EDIT
+  const handleEdit = (item) => {
+    setEditId(item._id);
+
+    setForm({
+      title: item.checklistId?.title || "",
+      role: item.role,
+      branch:
+        Object.keys(storeMap).find(
+          (k) => storeMap[k] === item.storeId
+        ) || "",
+      tasks: item.checklistId?.description?.split(", ") || [""],
+    });
+  };
+
+  // 🔥 DELETE
+  const handleDelete = (id) => {
+    if (confirm("Delete this checklist?")) {
+      dispatch(deleteChecklist(id));
+    }
+  };
 
   // add task
   const addTask = () => {
@@ -63,9 +136,9 @@ const Checklist = () => {
           }
         >
           <option value="">Select Role</option>
-          <option>Chef</option>
-          <option>Manager</option>
-          <option>Floor Manager</option>
+          <option value="STAFF">Chef</option>
+          <option value="MANAGER">Manager</option>
+          <option value="MANAGER">Floor Manager</option>
         </select>
 
         {/* BRANCH */}
@@ -77,9 +150,13 @@ const Checklist = () => {
           }
         >
           <option value="">Select Branch</option>
-          <option>Indore</option>
-          <option>Bhopal</option>
-          <option>Ujjain</option>
+
+          {storeList?.map((store) => (
+            <option key={store._id} value={store._id}>
+              {store.name}
+            </option>
+          ))}
+
         </select>
 
         {/* TASKS */}
@@ -120,11 +197,43 @@ const Checklist = () => {
         </div>
 
         {/* SUBMIT */}
-        <Button className="w-full">
-          Save Checklist
+        <Button className="w-full" onClick={handleSubmit}>
+          {loading ? "Saving..." : editId ? "Update Checklist" : "Save Checklist"}
         </Button>
 
       </Card>
+
+      {/* 🔥 LIST (UI SAME STYLE) */}
+      <div className="space-y-3">
+        {list?.map((item) => (
+          <Card key={item._id} className="flex justify-between items-center p-3">
+
+            <div>
+              <p className="font-semibold">
+                {item.checklistId?.title}
+              </p>
+              <p className="text-xs text-gray-500">
+                {item.role}
+              </p>
+            </div>
+
+            <div className="flex gap-2">
+              <Button size="icon" onClick={() => handleEdit(item)}>
+                <Pencil size={16} />
+              </Button>
+
+              <Button
+                size="icon"
+                variant="danger"
+                onClick={() => handleDelete(item._id)}
+              >
+                <Trash2 size={16} />
+              </Button>
+            </div>
+
+          </Card>
+        ))}
+      </div>
 
     </div>
   );

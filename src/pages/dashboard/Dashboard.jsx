@@ -92,11 +92,10 @@ const Dashboard = () => {
                       {order.amount}
                     </p>
                     <p
-                      className={`text-xs ${
-                        order.status === "Pending"
-                          ? "text-red-500"
-                          : "text-green-500"
-                      }`}
+                      className={`text-xs ${order.status === "Pending"
+                        ? "text-red-500"
+                        : "text-green-500"
+                        }`}
                     >
                       {order.status}
                     </p>
