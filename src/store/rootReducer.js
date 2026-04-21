@@ -13,6 +13,7 @@ import bankReducer from "./slices/bankSlice";
 import mobileAlertReducer from "./slices/mobileAlertSlice";
 import checklistReducer from "./slices/checklistSlice";
 import storeReducer from "./slices/storeSlice";
+import appUserReducer from "./slices/appUserSlice";
 
 export default combineReducers({
   auth: authReducer,
@@ -26,6 +27,8 @@ export default combineReducers({
   qr: qrReducer,
   feedback: feedbackReducer,
   bank: bankReducer,
+  mobileAlert: mobileAlertReducer,
   checklist: checklistReducer,
   store: storeReducer,
+  appUser: appUserReducer,
 });

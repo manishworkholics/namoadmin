@@ -15,7 +15,9 @@ import {
 
 const Mobilealert = () => {
   const dispatch = useDispatch();
-  const { data = [] } = useSelector((state) => state.mobileAlert);
+  const { data = [] } = useSelector(
+    (state) => state.mobileAlert || { data: [] }
+  );
 
   const [form, setForm] = useState({
     title: "",

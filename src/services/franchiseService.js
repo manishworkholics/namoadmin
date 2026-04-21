@@ -2,7 +2,7 @@ import API from "./api";
 
 // GET ALL
 export const getAllFranchise = () =>
-  API.get("/users/getAllUser");
+  API.get("/users/getAllUser?role=FRANCHISE");
 
 // ENABLE / DISABLE ORDER
 export const toggleFranchiseOrder = (id, value) =>

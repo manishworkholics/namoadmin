@@ -29,6 +29,7 @@ import Checklist from "./pages/checklist/Checklist";
 import ChecklistReport from "./pages/checklist/ChecklistReport";
 import Attendance from "./pages/attendance/Attendance";
 import Login from "./pages/auth/Login";
+import AppUser from "./pages/appuser/AppUser";
 
 // 🔥 GUARDS
 import AuthGuard from "./routes/AuthGuard";
@@ -88,6 +89,7 @@ function App() {
           <Route path="checklist-report" element={<ChecklistReport />} />
           <Route path="attendance-report" element={<Attendance />} />
           <Route path="analytics-page" element={<AnalyticsPage />} />
+          <Route path="app-users" element={<AppUser />} />
         </Route>
 
       </Routes>

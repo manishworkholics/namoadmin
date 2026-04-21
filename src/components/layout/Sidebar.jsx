@@ -26,6 +26,7 @@ const menu = [
   { name: "Feedback", path: "/admin/feedback", icon: MessageSquare },
   { name: "Bank Detail", path: "/admin/bank", icon: Landmark },
   { name: "Mobile Alert", path: "/admin/mobile-alert", icon: Smartphone },
+  { name: "App Users", path: "/admin/app-users", icon: Users },
 ];
 
 const Sidebar = ({ open, setOpen }) => {

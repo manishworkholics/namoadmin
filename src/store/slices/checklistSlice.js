@@ -1,20 +1,28 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import API from "../../services/api";
 
-// 🔥 GET ALL (FIXED)
+const normalizeTemplate = (checklist) => ({
+  _id: checklist?._id,
+  title: checklist?.title || "Untitled Checklist",
+  description: checklist?.description || "",
+  tasks: (checklist?.description || "")
+    .split(",")
+    .map((task) => task.trim())
+    .filter(Boolean),
+});
+
 export const getChecklists = createAsyncThunk(
   "checklist/getAll",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await API.get("/admin/checklist/list"); // ✅ FIXED
+      const res = await API.get("/admin/checklist/list");
       return res.data.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data);
+      return rejectWithValue(err.response?.data || err.message);
     }
   }
 );
 
-// 🔥 DELETE
 export const deleteChecklist = createAsyncThunk(
   "checklist/delete",
   async (id, { rejectWithValue }) => {
@@ -22,56 +30,63 @@ export const deleteChecklist = createAsyncThunk(
       await API.delete(`/admin/checklist/${id}`);
       return id;
     } catch (err) {
-      return rejectWithValue(err.response?.data);
+      return rejectWithValue(err.response?.data || err.message);
     }
   }
 );
 
-// 🔥 CREATE
-export const createChecklist = createAsyncThunk(
-  "checklist/create",
+export const createChecklistTemplate = createAsyncThunk(
+  "checklist/createTemplate",
   async (formData, { rejectWithValue }) => {
     try {
-      const { title, tasks, role, branch } = formData;
+      const { title, tasks } = formData;
 
-      const res1 = await API.post("/admin/checklist/create", {
+      const res = await API.post("/admin/checklist/create", {
         title,
         description: tasks.join(", "),
         isPhotoRequired: false,
       });
 
-      const checklistId = res1.data.data._id;
+      return res.data.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
 
-      await API.post("/admin/checklist/assign", {
+export const assignChecklist = createAsyncThunk(
+  "checklist/assign",
+  async (formData, { rejectWithValue }) => {
+    try {
+      const { checklistId, role, branch } = formData;
+
+      const res = await API.post("/admin/checklist/assign", {
         checklistId,
         storeId: branch,
         role,
       });
 
-      return true; // 🔥 important
+      return res.data?.data || formData;
     } catch (err) {
-      return rejectWithValue(err.response?.data);
+      return rejectWithValue(err.response?.data || err.message);
     }
   }
 );
 
-// 🔥 UPDATE (NEW)
-export const updateChecklist = createAsyncThunk(
-  "checklist/update",
-  async ({ id, formData }, { rejectWithValue }) => {
+export const getChecklistReport = createAsyncThunk(
+  "checklist/report",
+  async ({ storeId, date }, { rejectWithValue }) => {
     try {
-      const { title, tasks, role, branch } = formData;
-
-      await API.put(`/admin/checklist/${id}`, {
-        title,
-        description: tasks.join(", "),
-        role,
-        storeId: branch,
+      const res = await API.get("/admin/checklist/report", {
+        params: {
+          storeId,
+          date,
+        },
       });
 
-      return true;
+      return res.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data);
+      return rejectWithValue(err.response?.data || err.message);
     }
   }
 );
@@ -82,6 +97,19 @@ const checklistSlice = createSlice({
     loading: false,
     success: false,
     list: [],
+    templates: [],
+    report: {
+      summary: {
+        totalTasks: 0,
+        completed: 0,
+        pending: 0,
+        completionPercent: 0,
+      },
+      branchPerformance: [],
+      data: [],
+    },
+    reportLoading: false,
+    reportError: null,
     error: null,
   },
   reducers: {
@@ -89,45 +117,93 @@ const checklistSlice = createSlice({
       state.loading = false;
       state.success = false;
       state.error = null;
+      state.reportLoading = false;
+      state.reportError = null;
     },
   },
   extraReducers: (builder) => {
     builder
-
-      // 🔥 GET
       .addCase(getChecklists.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(getChecklists.fulfilled, (state, action) => {
         state.loading = false;
-        state.list = action.payload;
+        state.list = action.payload || [];
+        state.templates = Array.from(
+          new Map(
+            (action.payload || [])
+              .filter((item) => item.checklistId?._id)
+              .map((item) => [
+                item.checklistId._id,
+                normalizeTemplate(item.checklistId),
+              ])
+          ).values()
+        );
       })
       .addCase(getChecklists.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
-
-      // 🔥 CREATE
-      .addCase(createChecklist.pending, (state) => {
+      .addCase(createChecklistTemplate.pending, (state) => {
         state.loading = true;
+        state.success = false;
+        state.error = null;
       })
-      .addCase(createChecklist.fulfilled, (state) => {
+      .addCase(createChecklistTemplate.fulfilled, (state, action) => {
+        state.loading = false;
+        state.success = true;
+
+        const template = normalizeTemplate(action.payload);
+        const exists = state.templates.some((item) => item._id === template._id);
+
+        if (!exists) {
+          state.templates.unshift(template);
+        }
+      })
+      .addCase(createChecklistTemplate.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(assignChecklist.pending, (state) => {
+        state.loading = true;
+        state.success = false;
+        state.error = null;
+      })
+      .addCase(assignChecklist.fulfilled, (state) => {
         state.loading = false;
         state.success = true;
       })
-
-      // 🔥 UPDATE
-      .addCase(updateChecklist.pending, (state) => {
-        state.loading = true;
-      })
-      .addCase(updateChecklist.fulfilled, (state) => {
+      .addCase(assignChecklist.rejected, (state, action) => {
         state.loading = false;
-        state.success = true;
+        state.error = action.payload;
       })
-
-      // 🔥 DELETE
+      .addCase(getChecklistReport.pending, (state) => {
+        state.reportLoading = true;
+        state.reportError = null;
+      })
+      .addCase(getChecklistReport.fulfilled, (state, action) => {
+        state.reportLoading = false;
+        state.report = {
+          summary: action.payload?.summary || {
+            totalTasks: 0,
+            completed: 0,
+            pending: 0,
+            completionPercent: 0,
+          },
+          branchPerformance: action.payload?.branchPerformance || [],
+          data: action.payload?.data || [],
+        };
+      })
+      .addCase(getChecklistReport.rejected, (state, action) => {
+        state.reportLoading = false;
+        state.reportError = action.payload;
+      })
       .addCase(deleteChecklist.fulfilled, (state, action) => {
-        state.list = state.list.filter((i) => i._id !== action.payload);
+        state.list = state.list.filter((item) => item._id !== action.payload);
+      })
+      .addCase(deleteChecklist.rejected, (state, action) => {
+        state.error = action.payload;
       });
   },
 });
