@@ -3,7 +3,8 @@ import {
   Home, X, ShoppingCart, Users, Package,
   FileText, Bell, File, QrCode,
   MessageSquare, Landmark, Smartphone,
-  ClipboardList, BarChart3, CheckSquare, CalendarDays
+  ClipboardList, BarChart3, CheckSquare, CalendarDays,
+  Boxes, ClipboardCheck, History
 } from "lucide-react";
 
 
@@ -13,6 +14,9 @@ const menu = [
   { name: "Franchise", path: "/admin/franchise", icon: Users },
   { name: "Sub Staff", path: "/admin/staff", icon: Users },
   { name: "Items", path: "/admin/items", icon: Package },
+  { name: "Inventory Master", path: "/admin/inventory-master", icon: Boxes },
+  { name: "Item Issue", path: "/admin/item-issue", icon: ClipboardCheck },
+  { name: "Issue History", path: "/admin/issue-history", icon: History },
 
   { name: "Checklist", path: "/admin/checklist", icon: CheckSquare },
   { name: "Checklist Report", path: "/admin/checklist-report", icon: ClipboardList },

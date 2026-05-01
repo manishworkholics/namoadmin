@@ -14,6 +14,8 @@ import mobileAlertReducer from "./slices/mobileAlertSlice";
 import checklistReducer from "./slices/checklistSlice";
 import storeReducer from "./slices/storeSlice";
 import appUserReducer from "./slices/appUserSlice";
+import inventoryMasterReducer from "./slices/inventoryMasterSlice";
+import issueReducer from "./slices/issueSlice";
 
 export default combineReducers({
   auth: authReducer,
@@ -31,4 +33,6 @@ export default combineReducers({
   checklist: checklistReducer,
   store: storeReducer,
   appUser: appUserReducer,
+  inventoryMaster: inventoryMasterReducer,
+  issue: issueReducer,
 });

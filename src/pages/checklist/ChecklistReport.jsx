@@ -4,14 +4,17 @@ import {
   CalendarDays,
   CheckCircle2,
   ClipboardList,
+  Eye,
+  Image,
   LoaderCircle,
+  MessageSquareText,
   RotateCw,
   Store,
   TimerReset,
+  UserRound,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import Card from "../../components/ui/Card";
-import Table from "../../components/ui/Table";
 import Badge from "../../components/ui/Badge";
 import Button from "../../components/ui/Button";
 import { getStores } from "../../store/slices/storeSlice";
@@ -37,6 +40,7 @@ const ChecklistReport = () => {
     date: getTodayDate(),
     branch: "",
   });
+  const [viewReportId, setViewReportId] = useState("");
 
   useEffect(() => {
     dispatch(getStores());
@@ -108,6 +112,17 @@ const ChecklistReport = () => {
         })
       );
     }
+  };
+
+  const getReportTitle = (item, index) =>
+    item.task || item.title || `Checklist Task ${index + 1}`;
+
+  const getSubtaskPercent = (item) => {
+    if (!item.totalSubtasks) {
+      return String(item.status).toLowerCase() === "completed" ? 100 : 0;
+    }
+
+    return Math.round(((item.completedSubtasks || 0) / item.totalSubtasks) * 100);
   };
 
   return (
@@ -326,75 +341,200 @@ const ChecklistReport = () => {
         </Card>
       </div>
 
-      <div className="space-y-3 md:hidden">
+      <Card className="overflow-hidden p-0">
+        <div className="border-b border-gray-100 px-5 py-4 dark:border-gray-800">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Checklist Task List
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Main checklist titles are shown first. Click View to inspect completion details.
+              </p>
+            </div>
+            <Badge text={`${reportData.length} Records`} type="info" />
+          </div>
+        </div>
+
+        <div className="space-y-3 p-4">
         {reportData.length > 0 ? (
           reportData.map((item, index) => {
             const isCompleted =
               String(item.status).toLowerCase() === "completed";
+            const reportId = `${item.branch}-${item.role || "role"}-${
+              item.task || "task"
+            }-${item.date}-${index}`;
+            const isOpen = viewReportId === reportId;
+            const subtaskPercent = getSubtaskPercent(item);
 
             return (
-              <Card key={`${item.task}-${index}`} className="p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-gray-900 dark:text-white">
-                      {item.task}
-                    </p>
-                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                      {item.branch}
-                    </p>
+              <div
+                key={reportId}
+                className="rounded-2xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900/60"
+              >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-semibold text-gray-900 dark:text-white">
+                        {getReportTitle(item, index)}
+                      </p>
+                      <Badge
+                        text={item.status || "Unknown"}
+                        type={isCompleted ? "success" : "warning"}
+                      />
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 shadow-sm dark:bg-gray-800">
+                        <Store size={12} />
+                        {item.branch || "Unknown Branch"}
+                      </span>
+                      {item.role && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 shadow-sm dark:bg-gray-800">
+                          <UserRound size={12} />
+                          {item.role}
+                        </span>
+                      )}
+                      <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 shadow-sm dark:bg-gray-800">
+                        <CalendarDays size={12} />
+                        {item.date || filters.date}
+                      </span>
+                    </div>
                   </div>
-                  <Badge
-                    text={item.status}
-                    type={isCompleted ? "success" : "warning"}
-                  />
+
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="w-full sm:w-auto"
+                    onClick={() =>
+                      setViewReportId((currentId) =>
+                        currentId === reportId ? "" : reportId
+                      )
+                    }
+                  >
+                    <Eye size={14} />
+                    {isOpen ? "Hide" : "View"}
+                  </Button>
                 </div>
 
-                <div className="mt-4 flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-                  <span>Date</span>
-                  <span>{item.date}</span>
-                </div>
-              </Card>
+                {isOpen && (
+                  <div className="mt-4 space-y-4 rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-800">
+                    {item.description && (
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400">
+                          Description
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">
+                          {item.description}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      <div className="rounded-2xl bg-emerald-50 p-4 dark:bg-emerald-500/10">
+                        <p className="text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                          Completed Subtasks
+                        </p>
+                        <p className="mt-1 text-2xl font-bold text-emerald-700 dark:text-emerald-200">
+                          {item.completedSubtasks || 0}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl bg-blue-50 p-4 dark:bg-blue-500/10">
+                        <p className="text-xs font-medium text-blue-700 dark:text-blue-300">
+                          Total Subtasks
+                        </p>
+                        <p className="mt-1 text-2xl font-bold text-blue-700 dark:text-blue-200">
+                          {item.totalSubtasks || 0}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl bg-orange-50 p-4 dark:bg-orange-500/10">
+                        <p className="text-xs font-medium text-orange-700 dark:text-orange-300">
+                          Progress
+                        </p>
+                        <p className="mt-1 text-2xl font-bold text-orange-700 dark:text-orange-200">
+                          {subtaskPercent}%
+                        </p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="mb-3 flex items-center justify-between">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                          Subtasks
+                        </p>
+                        <Badge
+                          text={`${item.completedSubtasks || 0}/${
+                            item.totalSubtasks || 0
+                          } Done`}
+                          type={isCompleted ? "success" : "warning"}
+                        />
+                      </div>
+
+                      {item.subtasks?.length > 0 ? (
+                        <div className="space-y-2">
+                          {item.subtasks.map((subtask, subtaskIndex) => {
+                            const subtaskCompleted =
+                              String(subtask.status).toLowerCase() ===
+                              "completed";
+
+                            return (
+                              <div
+                                key={`${reportId}-subtask-${subtaskIndex}`}
+                                className="rounded-xl border border-gray-100 px-3 py-3 dark:border-gray-700"
+                              >
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                  <p className="text-sm font-medium leading-6 text-gray-900 dark:text-white">
+                                    {subtaskIndex + 1}. {subtask.title}
+                                  </p>
+                                  <Badge
+                                    text={subtask.status || "Unknown"}
+                                    type={
+                                      subtaskCompleted ? "success" : "warning"
+                                    }
+                                  />
+                                </div>
+
+                                {(subtask.remarks || subtask.image) && (
+                                  <div className="mt-3 flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                    {subtask.remarks && (
+                                      <span className="inline-flex items-center gap-1 rounded-full bg-gray-50 px-2.5 py-1 dark:bg-gray-900">
+                                        <MessageSquareText size={12} />
+                                        {subtask.remarks}
+                                      </span>
+                                    )}
+                                    {subtask.image && (
+                                      <a
+                                        href={subtask.image}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex items-center gap-1 rounded-full bg-gray-50 px-2.5 py-1 font-medium text-primary dark:bg-gray-900"
+                                      >
+                                        <Image size={12} />
+                                        View Photo
+                                      </a>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="rounded-2xl border border-dashed border-gray-200 px-4 py-6 text-center text-sm text-gray-400 dark:border-gray-700">
+                          No subtask details available for this record.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             );
           })
         ) : (
-          <Card className="p-8 text-center text-sm text-gray-400">
+          <div className="rounded-2xl border border-dashed border-gray-200 px-4 py-8 text-center text-sm text-gray-400 dark:border-gray-700">
            No checklist records found for this filter.
-          </Card>
+          </div>
         )}
-      </div>
-
-      <Card className="hidden overflow-hidden p-0 md:block">
-        <div className="border-b border-gray-100 px-5 py-4 dark:border-gray-800">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Task Details
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Detailed task records for the checklist report.
-          </p>
         </div>
-
-        <Table
-          columns={[
-            { header: "Branch", accessor: "branch" },
-            { header: "Task", accessor: "task" },
-            {
-              header: "Status",
-              render: (row) => {
-                const isCompleted =
-                  String(row.status).toLowerCase() === "completed";
-
-                return (
-                  <Badge
-                    text={row.status}
-                    type={isCompleted ? "success" : "warning"}
-                  />
-                );
-              },
-            },
-            { header: "Date", accessor: "date" },
-          ]}
-          data={reportData}
-        />
       </Card>
     </div>
   );

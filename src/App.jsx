@@ -13,6 +13,9 @@ import Consumption from "./pages/franchise/Consumption";
 import EditFranchise from "./pages/franchise/EditFranchise";
 
 import Items from "./pages/items/Items";
+import InventoryMaster from "./pages/internalOrdering/InventoryMaster";
+import ItemIssue from "./pages/internalOrdering/ItemIssue";
+import IssueHistory from "./pages/internalOrdering/IssueHistory";
 
 import Staff from "./pages/staff/Staff";
 import AddSubStaff from "./pages/staff/AddSubStaff";
@@ -72,6 +75,9 @@ function App() {
           <Route path="edit-franchise/:id" element={<EditFranchise />} />
 
           <Route path="items" element={<Items />} />
+          <Route path="inventory-master" element={<InventoryMaster />} />
+          <Route path="item-issue" element={<ItemIssue />} />
+          <Route path="issue-history" element={<IssueHistory />} />
 
           <Route path="staff" element={<Staff />} />
           <Route path="add-staff" element={<AddSubStaff />} />

@@ -1,15 +1,39 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import API from "../../services/api";
 
-const normalizeTemplate = (checklist) => ({
-  _id: checklist?._id,
-  title: checklist?.title || "Untitled Checklist",
-  description: checklist?.description || "",
-  tasks: (checklist?.description || "")
-    .split(",")
-    .map((task) => task.trim())
-    .filter(Boolean),
-});
+const normalizeTask = (task) => {
+  if (typeof task === "string") {
+    return {
+      title: task,
+      description: "",
+      isPhotoRequired: false,
+    };
+  }
+
+  return {
+    title: task?.title || "Untitled Task",
+    description: task?.description || "",
+    isPhotoRequired: Boolean(task?.isPhotoRequired),
+  };
+};
+
+const normalizeTemplate = (checklist) => {
+  const rawTasks =
+    Array.isArray(checklist?.tasks) && checklist.tasks.length > 0
+      ? checklist.tasks
+      : (checklist?.description || "")
+          .split(",")
+          .map((task) => task.trim())
+          .filter(Boolean);
+
+  return {
+    _id: checklist?._id,
+    title: checklist?.title || "Untitled Checklist",
+    description: checklist?.description || "",
+    isPhotoRequired: Boolean(checklist?.isPhotoRequired),
+    tasks: rawTasks.map(normalizeTask),
+  };
+};
 
 export const getChecklists = createAsyncThunk(
   "checklist/getAll",
@@ -39,13 +63,7 @@ export const createChecklistTemplate = createAsyncThunk(
   "checklist/createTemplate",
   async (formData, { rejectWithValue }) => {
     try {
-      const { title, tasks } = formData;
-
-      const res = await API.post("/admin/checklist/create", {
-        title,
-        description: tasks.join(", "),
-        isPhotoRequired: false,
-      });
+      const res = await API.post("/admin/checklist/create", formData);
 
       return res.data.data;
     } catch (err) {

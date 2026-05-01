@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ClipboardList,
+  Eye,
   Plus,
   Send,
   Store,
@@ -28,7 +29,14 @@ const roleOptions = [
 
 const emptyTemplateForm = {
   title: "",
-  tasks: [""],
+  description: "",
+  isPhotoRequired: false,
+  tasks: [
+    {
+      title: "",
+      description: "",
+    },
+  ],
 };
 
 const emptyAssignForm = {
@@ -46,6 +54,7 @@ const Checklist = () => {
 
   const [templateForm, setTemplateForm] = useState(emptyTemplateForm);
   const [assignForm, setAssignForm] = useState(emptyAssignForm);
+  const [viewTemplateId, setViewTemplateId] = useState("");
 
   useEffect(() => {
     dispatch(getStores());
@@ -73,14 +82,23 @@ const Checklist = () => {
   const addTask = () => {
     setTemplateForm((prev) => ({
       ...prev,
-      tasks: [...prev.tasks, ""],
+      tasks: [
+        ...prev.tasks,
+        {
+          title: "",
+          description: "",
+        },
+      ],
     }));
   };
 
-  const updateTask = (value, index) => {
+  const updateTask = (field, value, index) => {
     setTemplateForm((prev) => {
       const nextTasks = [...prev.tasks];
-      nextTasks[index] = value;
+      nextTasks[index] = {
+        ...nextTasks[index],
+        [field]: value,
+      };
 
       return {
         ...prev,
@@ -98,22 +116,27 @@ const Checklist = () => {
 
   const handleCreateTemplate = () => {
     const filteredTasks = templateForm.tasks
-      .map((task) => task.trim())
-      .filter(Boolean);
+      .map((task) => ({
+        title: task.title.trim(),
+        description: task.description.trim(),
+      }))
+      .filter((task) => task.title);
 
     if (!templateForm.title.trim()) {
-      alert("Checklist title required hai.");
+      alert("Checklist title is required.");
       return;
     }
 
     if (filteredTasks.length === 0) {
-      alert("Kam se kam ek task add kariye.");
+      alert("Add at least one task.");
       return;
     }
 
     dispatch(
       createChecklistTemplate({
         title: templateForm.title.trim(),
+        description: templateForm.description.trim(),
+        isPhotoRequired: Boolean(templateForm.isPhotoRequired),
         tasks: filteredTasks,
       })
     );
@@ -136,7 +159,7 @@ const Checklist = () => {
   };
 
   const handleDeleteAssignment = (id) => {
-    if (window.confirm("Assigned checklist delete karna hai?")) {
+    if (window.confirm("Delete assigned checklist?")) {
       dispatch(deleteChecklist(id));
     }
   };
@@ -221,40 +244,91 @@ const Checklist = () => {
               placeholder="Jaise Opening Kitchen Checklist"
             />
 
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Checklist Description
+              </label>
+              <textarea
+                value={templateForm.description}
+                onChange={(e) =>
+                  setTemplateForm((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
+                placeholder="Jaise open store, clean the floor, cut the vegetable"
+                rows={3}
+                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none transition focus:ring-2 focus:ring-primary dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
+              />
+            </div>
+
+            <label className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-medium text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+              <input
+                type="checkbox"
+                checked={templateForm.isPhotoRequired}
+                onChange={(e) =>
+                  setTemplateForm((prev) => ({
+                    ...prev,
+                    isPhotoRequired: e.target.checked,
+                  }))
+                }
+                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+              />
+              Photo required for this checklist
+            </label>
+
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
                   Tasks
                 </p>
-                <button
-                  type="button"
-                  onClick={addTask}
-                  className="text-sm font-medium text-primary"
-                >
-                  + Add Task
-                </button>
               </div>
 
               {templateForm.tasks.map((task, index) => (
-                <div key={index} className="flex gap-2">
-                  <input
-                    value={task}
-                    onChange={(e) => updateTask(e.target.value, index)}
-                    placeholder={`Task ${index + 1}`}
-                    className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                <div
+                  key={index}
+                  className="space-y-3 rounded-2xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900/60"
+                >
+                  <div className="flex items-start gap-2">
+                    <input
+                      value={task.title}
+                      onChange={(e) => updateTask("title", e.target.value, index)}
+                      placeholder={`Task ${index + 1} title`}
+                      className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                    />
+
+                    {templateForm.tasks.length > 1 && (
+                      <Button
+                        variant="danger"
+                        size="icon"
+                        onClick={() => removeTask(index)}
+                      >
+                        <Trash2 size={16} />
+                      </Button>
+                    )}
+                  </div>
+
+                  <textarea
+                    value={task.description}
+                    onChange={(e) =>
+                      updateTask("description", e.target.value, index)
+                    }
+                    placeholder={`Task ${index + 1} description`}
+                    rows={2}
+                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
                   />
 
-                  {templateForm.tasks.length > 1 && (
-                    <Button
-                      variant="danger"
-                      size="icon"
-                      onClick={() => removeTask(index)}
-                    >
-                      <Trash2 size={16} />
-                    </Button>
-                  )}
                 </div>
               ))}
+
+              <button
+                type="button"
+                onClick={addTask}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-primary/40 bg-orange-50 px-4 py-3 text-sm font-semibold text-primary transition hover:border-primary hover:bg-orange-100 dark:bg-orange-500/10 dark:hover:bg-orange-500/20"
+              >
+                <Plus size={16} />
+                Add Task
+              </button>
             </div>
 
             <Button className="w-full" onClick={handleCreateTemplate}>
@@ -373,7 +447,7 @@ const Checklist = () => {
                       key={`${selectedTemplate._id}-${index}`}
                       className="rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-600 shadow-sm dark:bg-gray-800 dark:text-gray-300"
                     >
-                      {task}
+                      {task.title}
                     </span>
                   ))}
                 </div>
@@ -406,28 +480,65 @@ const Checklist = () => {
                   key={template._id}
                   className="rounded-2xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900/60"
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="font-semibold text-gray-900 dark:text-white">
                         {template.title}
                       </p>
-                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        {template.tasks.length} tasks saved
-                      </p>
                     </div>
-                    <Badge text="Reusable" type="success" />
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() =>
+                        setViewTemplateId((currentId) =>
+                          currentId === template._id ? "" : template._id
+                        )
+                      }
+                    >
+                      <Eye size={14} />
+                      {viewTemplateId === template._id ? "Hide" : "View"}
+                    </Button>
                   </div>
 
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {template.tasks.map((task, index) => (
-                      <span
-                        key={`${template._id}-task-${index}`}
-                        className="rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-600 shadow-sm dark:bg-gray-800 dark:text-gray-300"
-                      >
-                        {task}
-                      </span>
-                    ))}
-                  </div>
+                  {viewTemplateId === template._id && (
+                    <div className="mt-4 space-y-4 rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-800">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge text={`${template.tasks.length} Tasks`} type="info" />
+                        <Badge
+                          text={
+                            template.isPhotoRequired
+                              ? "Photo Required"
+                              : "Photo Optional"
+                          }
+                          type={template.isPhotoRequired ? "warning" : "success"}
+                        />
+                      </div>
+
+                      {template.description && (
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {template.description}
+                        </p>
+                      )}
+
+                      <div className="space-y-2">
+                        {template.tasks.map((task, index) => (
+                          <div
+                            key={`${template._id}-task-${index}`}
+                            className="rounded-xl border border-gray-100 px-3 py-2 dark:border-gray-700"
+                          >
+                            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                              {index + 1}. {task.title}
+                            </p>
+                            {task.description && (
+                              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                {task.description}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))
             ) : (
